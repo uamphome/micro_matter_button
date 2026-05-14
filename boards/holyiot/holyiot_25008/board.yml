@@ -1,0 +1,8 @@
+board:
+  name: holyiot_25008
+  vendor: holyiot
+  socs:
+  - name: nrf54l15
+    variants:
+    - name: xip
+      cpucluster: cpuflpr

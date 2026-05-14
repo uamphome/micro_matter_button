@@ -1,0 +1,28 @@
+/dts-v1/;
+#include <nordic/nrf54l15_cpuapp.dtsi>
+#include "holyiot_25008-pinctrl.dtsi"
+
+/ {
+	model = "Holyiot 25008 BLE Beacon";
+	compatible = "holyiot,holyiot-25008-cpuapp";
+
+	chosen {
+		zephyr,code-partition = &slot0_partition;
+		zephyr,sram = &cpuapp_sram;
+		zephyr,flash = &cpuapp_rram;
+		zephyr,flash-controller = &rram_controller;
+	};
+};
+
+&grtc {
+	owned-channels = <0 1 2 3 4 5 6 7 8 9 10 11>;
+	/* Channels 7-11 reserved for Zero Latency IRQs, 3-4 for FLPR */
+	child-owned-channels = <3 4 7 8 9 10 11>;
+	status = "okay";
+};
+
+&cpuapp_sram {
+	status = "okay";
+};
+
+#include <nordic/nrf54l15_partition.dtsi>

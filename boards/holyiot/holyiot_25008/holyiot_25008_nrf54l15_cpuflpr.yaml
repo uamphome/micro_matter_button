@@ -1,0 +1,10 @@
+identifier: holyiot_25008/nrf54l15/cpuflpr
+name: Holyiot 25008 BLE Beacon
+vendor: holyiot
+arch: riscv
+toolchain:
+  - zephyr
+sysbuild: true
+ram: 96
+flash: 96
+supported: []
