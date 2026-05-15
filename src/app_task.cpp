@@ -17,6 +17,8 @@
 
 #include <zephyr/logging/log.h>
 
+#include <zephyr/drivers/sensor.h>
+
 LOG_MODULE_DECLARE(app, CONFIG_CHIP_APP_LOG_LEVEL);
 
 using namespace ::chip;
@@ -141,6 +143,20 @@ CHIP_ERROR AppTask::Init()
 		LightSwitch::GetInstance().Init(kLightSwitchEndpointId);
 		return CHIP_NO_ERROR;
 	} }));
+
+    const struct device *accel_dev = DEVICE_DT_GET(DT_ALIAS(accel0));
+    
+    if (!device_is_ready(accel_dev)) {
+        LOG_ERR("Accelerometer not ready - Check Overlay!");
+        // We don't return error here because the switch function is more important
+    } else {
+        LOG_INF("Accelerometer initialized and put to sleep.");
+        
+        // Optional: Explicitly force Power Down (ODR=0) just to be safe
+        // The driver does this by default in polling mode, but being explicit is good.
+        struct sensor_value odr = {0}; // 0 Hz = Power Down
+        sensor_attr_set(accel_dev, SENSOR_CHAN_ACCEL_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &odr);
+    }
 
 	/* Initialize application timers */
 	k_timer_init(&sDimmerPressKeyTimer, AppTask::UserTimerTimeoutCallback, nullptr);
