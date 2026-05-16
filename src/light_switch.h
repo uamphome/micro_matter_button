@@ -12,13 +12,6 @@
 
 #include <atomic>
 
-/** @class LightSwitch
- *  @brief Class for controlling a CHIP light bulb over a Thread network
- *
- *  Features:
- *  - discovering a CHIP light bulb which advertises itself by sending Thread multicast packets
- *  - toggling and dimming the connected CHIP light bulb by sending appropriate CHIP messages
- */
 class LightSwitch {
 public:
 	enum class Action : uint8_t {
@@ -30,8 +23,8 @@ public:
 	void Init(chip::EndpointId lightSwitchEndpoint);
 	void InitiateActionSwitch(Action action);
 	
-	// Updated signature to accept direction
-	void DimmerChangeBrightness(bool increase);
+	// UPDATED: Now accepts an absolute brightness level
+	void SetBrightnessLevel(uint8_t targetLevel);
 	
 	chip::EndpointId GetLightSwitchEndpointId() { return mLightSwitchEndpoint; }
 	static void SwitchChangedHandler(const chip::app::Clusters::Binding::TableEntry &binding,

@@ -34,10 +34,12 @@ constexpr EndpointId kLightEndpointId = 1;
 
 // --- Accelerometer Configuration ---
 constexpr uint32_t kAccelPollInterval = 50;         // 20Hz Polling
-constexpr uint32_t kTapWakeDurationMs = 10000;
-constexpr uint32_t kRotationWakeExtensionMs = 3000; 
-constexpr double kAngleThreshold = 0.2;             
+constexpr uint32_t kTapWakeDurationMs = 10000;      // 10 second sleep timeout
+constexpr uint32_t kRotationWakeExtensionMs = 3000; // 3 second extension on movement
 constexpr double kPi = 3.14159265358979323846;
+
+// Maps 1 full rotation to roughly 0-100% brightness
+constexpr double kRotationToLevelMultiplier = 40.0; 
 
 k_timer sSingleTapTimer;
 k_timer sAccelPollTimer;
@@ -49,6 +51,11 @@ const struct device *sAccelDevice = nullptr;
 double sLastAngle = 0.0;
 bool sFirstPollAfterWake = false;
 uint32_t sLastButtonPressTime = 0;
+
+// Internal states for the 1-second settling logic
+double sAccumulatedBrightness = 127.0; 
+uint8_t sLastSentBrightness = 127;
+uint32_t sLastMovementTime = 0; 
 
 #define APPLICATION_BUTTON_MASK DK_BTN2_MSK
 
@@ -67,42 +74,38 @@ void AppTask::SetAccelerometerPower(bool wake)
         odr.val1 = 25; 
         odr.val2 = 0;
         sFirstPollAfterWake = true;
+        sLastMovementTime = k_uptime_get_32(); // Reset the settling timer on wake
     } else {
         LOG_INF("Sleeping sensor (0Hz ODR).");
         odr.val1 = 0; 
         odr.val2 = 0;
     }
     
-    int err = sensor_attr_set(sAccelDevice, SENSOR_CHAN_ACCEL_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &odr);
-    if (err < 0) {
-        LOG_ERR("CRITICAL: Failed to set sensor power! Error: %d", err);
-    }
+    sensor_attr_set(sAccelDevice, SENSOR_CHAN_ACCEL_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &odr);
 }
 
 void AppTask::AccelPollEventHandler()
 {
     if (!sAccelDevice) return;
 
-    struct sensor_value accel[3];
-    int rc = sensor_sample_fetch(sAccelDevice);
-    if (rc < 0) {
-        LOG_ERR("Failed to fetch sensor sample: %d", rc);
-        return;
+    if (chip::Server::GetInstance().GetCommissioningWindowManager().IsCommissioningWindowOpen()) {
+        return; 
     }
 
-    if (sensor_channel_get(sAccelDevice, SENSOR_CHAN_ACCEL_XYZ, accel) < 0) {
+    struct sensor_value accel[3];
+    if (sensor_sample_fetch(sAccelDevice) < 0 || 
+        sensor_channel_get(sAccelDevice, SENSOR_CHAN_ACCEL_XYZ, accel) < 0) {
         return;
     }
 
     double x = sensor_value_to_double(&accel[0]);
     double y = sensor_value_to_double(&accel[1]);
-    double z = sensor_value_to_double(&accel[2]);
-    
-    // HEARTBEAT TELEMETRY: Print every 20 ticks (1 second) to prove the sensor is alive
-    static int tickCount = 0;
-    if (++tickCount >= 20) {
-        LOG_INF("SENSOR ALIVE -> X: %.1f | Y: %.1f | Z: %.1f", x, y, z);
-        tickCount = 0;
+
+    // GEOMETRY NOISE REJECTION: Check horizontal magnitude. 
+    double magnitude_sq = (x * x) + (y * y);
+    if (magnitude_sq < 9.0) {
+        sLastAngle = std::atan2(y, x); 
+        return;
     }
 
     double currentAngle = std::atan2(y, x);
@@ -110,7 +113,6 @@ void AppTask::AccelPollEventHandler()
     if (sFirstPollAfterWake) {
         sLastAngle = currentAngle;
         sFirstPollAfterWake = false;
-        LOG_INF("Baseline angle captured. Ready for rotation.");
         return; 
     }
 
@@ -120,15 +122,40 @@ void AppTask::AccelPollEventHandler()
     if (deltaAngle > kPi) deltaAngle -= 2.0 * kPi;
     else if (deltaAngle < -kPi) deltaAngle += 2.0 * kPi;
 
-    if (std::abs(deltaAngle) > kAngleThreshold) {
-        bool increase = deltaAngle > 0;
+    uint32_t now = k_uptime_get_32();
+
+    // Check if movement is larger than the noise floor
+    if (std::abs(deltaAngle) >= 0.05) {
         
-        LOG_INF(">>> ROTATION DETECTED: %s! (Delta: %.2f) <<<", increase ? "UP" : "DOWN", deltaAngle);
-                
-        LightSwitch::GetInstance().DimmerChangeBrightness(increase);
+        // 1. Accumulate the rotation
+        sAccumulatedBrightness += (deltaAngle * kRotationToLevelMultiplier);
+        
+        // 2. Clamp to valid Matter bounds
+        if (sAccumulatedBrightness > 254.0) sAccumulatedBrightness = 254.0;
+        if (sAccumulatedBrightness < 1.0) sAccumulatedBrightness = 1.0;
+
+        // 3. Update baselines and reset the 1-second settling timer
         sLastAngle = currentAngle; 
+        sLastMovementTime = now;
         
+        // 4. Extend the overall hardware sleep timer
         Instance().StartTimer(Timer::AccelSleep, kRotationWakeExtensionMs);
+        
+    } else {
+        // No significant physical movement detected on this 50ms tick.
+        // Check if it has been strictly > 300ms since the LAST movement.
+        if ((now - sLastMovementTime) > 300) {
+            
+            uint8_t targetLevel = (uint8_t)sAccumulatedBrightness;
+            
+            // Only send if we actually have a new value to flush
+            if (targetLevel != sLastSentBrightness) {
+                LOG_INF("Movement Settled (1s timeout). Flushing Net Change -> Target: %d", targetLevel);
+                
+                LightSwitch::GetInstance().SetBrightnessLevel(targetLevel);
+                sLastSentBrightness = targetLevel;
+            }
+        }
     }
 }
 

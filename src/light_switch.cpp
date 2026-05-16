@@ -57,33 +57,17 @@ void LightSwitch::InitiateActionSwitch(Action action)
 	}
 }
 
-void LightSwitch::DimmerChangeBrightness(bool increase)
+// UPDATED: Simply passes the requested level to the Thread network
+void LightSwitch::SetBrightnessLevel(uint8_t targetLevel)
 {
-    // Track the absolute brightness locally to force the bulb to obey
-    static int16_t currentLevel = 127; // Start in the middle
-    int step = 15; // ~6% per tick
-
-    if (increase) {
-        currentLevel += step;
-    } else {
-        currentLevel -= step;
-    }
-
-    // Clamp to valid Matter LevelControl bounds (1 to 254)
-    if (currentLevel > 254) currentLevel = 254;
-    if (currentLevel < 1) currentLevel = 1;
-
 	Nrf::Matter::BindingHandler::BindingData *data = Platform::New<Nrf::Matter::BindingHandler::BindingData>();
 	if (data) {
 		data->EndpointId = mLightSwitchEndpoint;
-		
-		// Use the absolute MoveToLevelWithOnOff command
 		data->CommandId = Clusters::LevelControl::Commands::MoveToLevelWithOnOff::Id;
 		data->ClusterId = Clusters::LevelControl::Id;
 		data->InvokeCommandFunc = SwitchChangedHandler;
 		
-		// Pass the calculated absolute level to the payload
-		data->Value = (uint8_t)currentLevel;
+		data->Value = targetLevel;
 		
 		Nrf::Matter::BindingHandler::RunBoundClusterAction(data);
 	}
@@ -214,7 +198,7 @@ void LightSwitch::LevelControlProcessCommand(CommandId commandId, const Binding:
 		Clusters::LevelControl::Commands::MoveToLevelWithOnOff::Type moveToLevelCommand;
 		
 		moveToLevelCommand.level = bindingData.Value;
-		moveToLevelCommand.transitionTime.SetNonNull(0); // Ensure an instant snap
+		moveToLevelCommand.transitionTime.SetNonNull(0); 
 
 		if (device) {
 			ret = Controller::InvokeCommandRequest(device->GetExchangeManager(),
