@@ -198,7 +198,9 @@ void LightSwitch::LevelControlProcessCommand(CommandId commandId, const Binding:
 		Clusters::LevelControl::Commands::MoveToLevelWithOnOff::Type moveToLevelCommand;
 		
 		moveToLevelCommand.level = bindingData.Value;
-		moveToLevelCommand.transitionTime.SetNonNull(0); 
+		
+        // THE FIX: Change 0 to 4 (400 milliseconds) for a smooth premium fade
+		moveToLevelCommand.transitionTime.SetNonNull(4); 
 
 		if (device) {
 			ret = Controller::InvokeCommandRequest(device->GetExchangeManager(),
