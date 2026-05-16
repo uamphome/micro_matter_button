@@ -100,11 +100,34 @@ void AppTask::AccelPollEventHandler()
 
     double x = sensor_value_to_double(&accel[0]);
     double y = sensor_value_to_double(&accel[1]);
+    double z = sensor_value_to_double(&accel[2]);
+
+    // --- MANUAL SLEEP (HORIZONTAL TILT) ---
+    // If you lay the board flat (Z-axis > 7.5 m/s^2), instantly stop listening.
+    if (std::abs(z) > 7.5) {
+        LOG_INF("Horizontal tilt detected! Turning off rotation listener.");
+        
+        // Flush any pending dimming changes so your last movement isn't lost
+        uint8_t targetLevel = (uint8_t)sAccumulatedBrightness;
+        if (targetLevel != sLastSentBrightness) {
+            LightSwitch::GetInstance().SetBrightnessLevel(targetLevel);
+            sLastSentBrightness = targetLevel;
+        }
+
+        // Kill the polling loop and the 10-second timeout timer
+        Instance().CancelTimer(Timer::AccelPoll);
+        Instance().CancelTimer(Timer::AccelSleep);
+        
+        // Power down the accelerometer
+        SetAccelerometerPower(false);
+        return;
+    }
 
     // GEOMETRY NOISE REJECTION: Check horizontal magnitude. 
     double magnitude_sq = (x * x) + (y * y);
     if (magnitude_sq < 9.0) {
         sLastAngle = std::atan2(y, x); 
+        sLastMovementTime = k_uptime_get_32(); 
         return;
     }
 
@@ -134,7 +157,7 @@ void AppTask::AccelPollEventHandler()
         if (sAccumulatedBrightness > 254.0) sAccumulatedBrightness = 254.0;
         if (sAccumulatedBrightness < 1.0) sAccumulatedBrightness = 1.0;
 
-        // 3. Update baselines and reset the 1-second settling timer
+        // 3. Update baselines and reset the settling timer
         sLastAngle = currentAngle; 
         sLastMovementTime = now;
         
@@ -143,14 +166,14 @@ void AppTask::AccelPollEventHandler()
         
     } else {
         // No significant physical movement detected on this 50ms tick.
-        // Check if it has been strictly > 300ms since the LAST movement.
-        if ((now - sLastMovementTime) > 300) {
+        // Check if it has been strictly > kMovementSettlingTimeMs since the LAST movement.
+        if ((now - sLastMovementTime) > 200) {
             
             uint8_t targetLevel = (uint8_t)sAccumulatedBrightness;
             
             // Only send if we actually have a new value to flush
             if (targetLevel != sLastSentBrightness) {
-                LOG_INF("Movement Settled (1s timeout). Flushing Net Change -> Target: %d", targetLevel);
+                LOG_INF("Movement Settled. Flushing Net Change -> Target: %d", targetLevel);
                 
                 LightSwitch::GetInstance().SetBrightnessLevel(targetLevel);
                 sLastSentBrightness = targetLevel;
