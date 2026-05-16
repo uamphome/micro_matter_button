@@ -9,6 +9,7 @@
 #include "board/board.h"
 
 #include <platform/CHIPDeviceLayer.h>
+#include <zephyr/drivers/sensor.h>
 
 struct k_timer;
 struct Identify;
@@ -26,13 +27,15 @@ public:
 	void UpdateClusterState();
 
 private:
-	enum Timer : uint8_t { DimmerTrigger, Dimmer };
+	enum Timer : uint8_t { SingleTap, AccelPoll, AccelSleep };
 
 	CHIP_ERROR Init();
 
-	static void DimmerTriggerEventHandler();
 	static void TimerEventHandler(const Timer &event);
 	static void ButtonEventHandler(Nrf::ButtonState state, Nrf::ButtonMask hasChanged);
+	
+	static void SetAccelerometerPower(bool wake);
+	static void AccelPollEventHandler();
 
 	static void StartTimer(Timer, uint32_t);
 	static void CancelTimer(Timer);

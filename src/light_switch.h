@@ -22,14 +22,17 @@
 class LightSwitch {
 public:
 	enum class Action : uint8_t {
-		Toggle, /* Switch state on lighting-app device */
-		On, /* Turn on light on lighting-app device */
-		Off /* Turn off light on lighting-app device */
+		Toggle,
+		On,
+		Off 
 	};
 
 	void Init(chip::EndpointId lightSwitchEndpoint);
 	void InitiateActionSwitch(Action action);
-	void DimmerChangeBrightness();
+	
+	// Updated signature to accept direction
+	void DimmerChangeBrightness(bool increase);
+	
 	chip::EndpointId GetLightSwitchEndpointId() { return mLightSwitchEndpoint; }
 	static void SwitchChangedHandler(const chip::app::Clusters::Binding::TableEntry &binding,
 					 chip::OperationalDeviceProxy *deviceProxy,
@@ -50,8 +53,6 @@ private:
 					       const chip::app::Clusters::Binding::TableEntry &binding,
 					       chip::OperationalDeviceProxy *device,
 					       Nrf::Matter::BindingHandler::BindingData &bindingData);
-	constexpr static auto kOnePercentBrightnessApproximation = 3;
-	constexpr static auto kMaximumBrightness = 254;
 
 	chip::EndpointId mLightSwitchEndpoint;
 };

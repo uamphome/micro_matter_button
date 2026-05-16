@@ -57,21 +57,34 @@ void LightSwitch::InitiateActionSwitch(Action action)
 	}
 }
 
-void LightSwitch::DimmerChangeBrightness()
+void LightSwitch::DimmerChangeBrightness(bool increase)
 {
-	static uint16_t sBrightness;
+    // Track the absolute brightness locally to force the bulb to obey
+    static int16_t currentLevel = 127; // Start in the middle
+    int step = 15; // ~6% per tick
+
+    if (increase) {
+        currentLevel += step;
+    } else {
+        currentLevel -= step;
+    }
+
+    // Clamp to valid Matter LevelControl bounds (1 to 254)
+    if (currentLevel > 254) currentLevel = 254;
+    if (currentLevel < 1) currentLevel = 1;
+
 	Nrf::Matter::BindingHandler::BindingData *data = Platform::New<Nrf::Matter::BindingHandler::BindingData>();
 	if (data) {
 		data->EndpointId = mLightSwitchEndpoint;
-		data->CommandId = Clusters::LevelControl::Commands::MoveToLevel::Id;
+		
+		// Use the absolute MoveToLevelWithOnOff command
+		data->CommandId = Clusters::LevelControl::Commands::MoveToLevelWithOnOff::Id;
 		data->ClusterId = Clusters::LevelControl::Id;
 		data->InvokeCommandFunc = SwitchChangedHandler;
-		/* add to brightness 3 to approximate 1% step of brightness after each call dimmer change. */
-		sBrightness += kOnePercentBrightnessApproximation;
-		if (sBrightness > kMaximumBrightness) {
-			sBrightness = 0;
-		}
-		data->Value = (uint8_t)sBrightness;
+		
+		// Pass the calculated absolute level to the payload
+		data->Value = (uint8_t)currentLevel;
+		
 		Nrf::Matter::BindingHandler::RunBoundClusterAction(data);
 	}
 }
@@ -124,8 +137,6 @@ void LightSwitch::OnOffProcessCommand(CommandId commandId, const Binding::TableE
 	};
 
 	if (device) {
-		/* We are validating connection is ready once here instead of multiple times in each case
-		 * statement below. */
 		VerifyOrDie(device->ConnectionReady());
 	}
 
@@ -195,16 +206,16 @@ void LightSwitch::LevelControlProcessCommand(CommandId commandId, const Binding:
 	CHIP_ERROR ret = CHIP_NO_ERROR;
 
 	if (device) {
-		/* We are validating connection is ready once here instead of multiple times in each case
-		 * statement below.
-		 */
 		VerifyOrDie(device->ConnectionReady());
 	}
 
 	switch (commandId) {
-	case Clusters::LevelControl::Commands::MoveToLevel::Id: {
-		Clusters::LevelControl::Commands::MoveToLevel::Type moveToLevelCommand;
+	case Clusters::LevelControl::Commands::MoveToLevelWithOnOff::Id: {
+		Clusters::LevelControl::Commands::MoveToLevelWithOnOff::Type moveToLevelCommand;
+		
 		moveToLevelCommand.level = bindingData.Value;
+		moveToLevelCommand.transitionTime.SetNonNull(0); // Ensure an instant snap
+
 		if (device) {
 			ret = Controller::InvokeCommandRequest(device->GetExchangeManager(),
 							       device->GetSecureSession().Value(), binding.remote,
