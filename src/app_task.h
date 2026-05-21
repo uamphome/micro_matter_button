@@ -33,8 +33,7 @@ private:
 
 	static void TimerEventHandler(const Timer &event);
 	static void ButtonEventHandler(Nrf::ButtonState state, Nrf::ButtonMask hasChanged);
-	
-	static void SetAccelerometerPower(bool wake);
+
 	static void AccelPollEventHandler();
 
 	static void StartTimer(Timer, uint32_t);
