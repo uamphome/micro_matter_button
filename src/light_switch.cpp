@@ -21,6 +21,11 @@ using namespace chip;
 using namespace chip::app;
 using namespace chip::app::Clusters;
 
+namespace {
+constexpr uint8_t kOnePercentBrightnessApproximation = 3;
+constexpr uint8_t kMaximumBrightness = 254;
+} // namespace
+
 LOG_MODULE_DECLARE(app, CONFIG_CHIP_APP_LOG_LEVEL);
 
 void LightSwitch::Init(chip::EndpointId lightSwitchEndpoint)
@@ -69,6 +74,24 @@ void LightSwitch::SetBrightnessLevel(uint8_t targetLevel)
 		
 		data->Value = targetLevel;
 		
+		Nrf::Matter::BindingHandler::RunBoundClusterAction(data);
+	}
+}
+
+void LightSwitch::DimmerChangeBrightness()
+{
+	static uint16_t sBrightness = 0;
+	Nrf::Matter::BindingHandler::BindingData *data = Platform::New<Nrf::Matter::BindingHandler::BindingData>();
+	if (data) {
+		data->EndpointId = mLightSwitchEndpoint;
+		data->CommandId = Clusters::LevelControl::Commands::MoveToLevel::Id;
+		data->ClusterId = Clusters::LevelControl::Id;
+		data->InvokeCommandFunc = SwitchChangedHandler;
+		sBrightness += kOnePercentBrightnessApproximation;
+		if (sBrightness > kMaximumBrightness) {
+			sBrightness = 0;
+		}
+		data->Value = (uint8_t)sBrightness;
 		Nrf::Matter::BindingHandler::RunBoundClusterAction(data);
 	}
 }

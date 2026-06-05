@@ -22,9 +22,8 @@ public:
 
 	void Init(chip::EndpointId lightSwitchEndpoint);
 	void InitiateActionSwitch(Action action);
-	
-	// UPDATED: Now accepts an absolute brightness level
 	void SetBrightnessLevel(uint8_t targetLevel);
+	void DimmerChangeBrightness();
 	
 	chip::EndpointId GetLightSwitchEndpointId() { return mLightSwitchEndpoint; }
 	static void SwitchChangedHandler(const chip::app::Clusters::Binding::TableEntry &binding,

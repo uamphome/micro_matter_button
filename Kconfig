@@ -48,6 +48,18 @@ endif # BOARD_NRF7002DK_NRF5340_CPUAPP || SHIELD_NRF7002EB2
 config CHIP_ENABLE_READ_CLIENT
 	default y
 
+choice MATTER_BUTTON_OPERATING_MODE
+	prompt "Device operating mode"
+	default MATTER_BUTTON_MODE_1
+
+config MATTER_BUTTON_MODE_1
+	bool "Dimmable switch (short-press toggle, double-tap accel dimming, long-press brightness cycle)"
+
+config MATTER_BUTTON_MODE_2
+	bool "Generic switch (short-press and long-press events on endpoint 2)"
+
+endchoice
+
 source "$(ZEPHYR_CONNECTEDHOMEIP_MODULE_DIR)/config/nrfconnect/chip-module/Kconfig.features"
 source "$(ZEPHYR_CONNECTEDHOMEIP_MODULE_DIR)/config/nrfconnect/chip-module/Kconfig.defaults"
 source "$(ZEPHYR_NRF_MODULE_DIR)/samples/matter/common/src/Kconfig"

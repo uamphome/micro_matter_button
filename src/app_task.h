@@ -25,9 +25,27 @@ public:
 	CHIP_ERROR StartApp();
 
 	void UpdateClusterState();
+	static void UpdateStatusLed();
 
 private:
-	enum Timer : uint8_t { SingleTap, AccelPoll, AccelSleep };
+	enum Timer : uint8_t {
+		/* Mode 1: accelerometer dimming */
+		SingleTap,
+		AccelPoll,
+		AccelSleep,
+		/* Mode 2: GPIO long-press dimming */
+		DimmerTrigger,
+		Dimmer,
+		/* Mode 3: generic switch */
+		LongPressDetect,
+		/* All modes: factory reset */
+		FactoryWarning,
+		FactoryReset,
+		/* All modes: commissioning LED */
+		StatusLedBlink,
+		/* 25015 only: environmental sensor poll */
+		SensorPoll,
+	};
 
 	CHIP_ERROR Init();
 
@@ -35,8 +53,11 @@ private:
 	static void ButtonEventHandler(Nrf::ButtonState state, Nrf::ButtonMask hasChanged);
 
 	static void AccelPollEventHandler();
+	static void SensorUpdateEventHandler();
 
 	static void StartTimer(Timer, uint32_t);
 	static void CancelTimer(Timer);
 	static void UserTimerTimeoutCallback(k_timer *timer);
+
+	static void MatterEventHandler(const chip::DeviceLayer::ChipDeviceEvent *event, intptr_t arg);
 };

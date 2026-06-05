@@ -1,0 +1,38 @@
+/dts-v1/;
+#include <nordic/nrf54l15_cpuflpr.dtsi>
+#include "holyiot_25015-pinctrl.dtsi"
+
+/ {
+	model = "Holyiot 25015 BLE Beacon";
+	compatible = "holyiot,holyiot-25015-cpuflpr";
+
+	chosen {
+		zephyr,code-partition = &cpuflpr_code_partition;
+		zephyr,flash = &cpuflpr_rram;
+		zephyr,sram = &cpuflpr_sram;
+	};
+};
+
+&cpuflpr_sram {
+	status = "okay";
+	reg = <0x20028000 DT_SIZE_K(96)>;
+	ranges = <0x0 0x20028000 DT_SIZE_K(96)>;
+};
+
+&cpuflpr_rram {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		cpuflpr_code_partition: partition@0 {
+			label = "image-0";
+			reg = <0x0 DT_SIZE_K(96)>;
+		};
+	};
+};
+
+&grtc {
+	owned-channels = <3 4>;
+	status = "okay";
+};

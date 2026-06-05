@@ -1,0 +1,10 @@
+identifier: holyiot_25015/nrf54l15/cpuflpr/xip
+name: Holyiot 25015 BLE Beacon
+vendor: holyiot
+arch: riscv
+toolchain:
+  - zephyr
+sysbuild: true
+ram: 96
+flash: 96
+supported: []
