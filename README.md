@@ -45,6 +45,8 @@ Four precompiled binaries are provided in the [Releases](../../releases/latest) 
 
 The HolyIoT boards have no USB port. You flash them over SWD using a Raspberry Pi Pico running picoprobe firmware.
 
+[![Alt Text](assets/images/setup.png)](assets/images/setup.png)
+
 1. Hold the **BOOTSEL** button on the Pico and plug it into your computer.
 2. Download the [picoprobe UF2](https://github.com/raspberrypi/picoprobe/releases) and drag it onto the Pico — it will appear as a USB drive.
 3. Wire the Pico to the HolyIoT board's SWD pads through the PCB test clip:
@@ -78,7 +80,7 @@ That's it — the chip will reset and start advertising over Bluetooth LE.
 
 Open your smart home app and add a new Matter device. Use the QR code or manual pairing code below when prompted.
 
-[![Alt Text](assets/images/setup.png)](assets/images/setup.png)
+
 
 **Manual pairing code:** `34970112332`  
 **QR Code:** [Scan or screenshot this](https://project-chip.github.io/connectedhomeip/qrcode.html?data=MT:4CT9142C00KA0648G00)
