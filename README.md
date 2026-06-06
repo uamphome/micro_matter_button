@@ -1,10 +1,10 @@
 # Micro Matter Button
 
-A tiny, coin-cell-powered **Matter over Thread** smart home button built on the [HolyIoT 25008](AFFILIATE_LINK_25008) and [HolyIoT 25015](AFFILIATE_LINK_25015) Bluetooth beacon boards. Both boards use the Nordic nRF54l15 SoC — a chip capable of running Matter and Zigbee, making it perfect for a DIY wireless smart home button.
+A tiny, coin-cell-powered **Matter over Thread** smart home button built on the [HolyIoT 25008](https://s.click.aliexpress.com/e/_c4MbjoMv) and [HolyIoT 25015](https://s.click.aliexpress.com/e/_c3R5B6Fn) Bluetooth beacon boards. Both boards use the Nordic nRF54l15 SoC — a chip capable of running Matter and Zigbee, making it perfect for a DIY wireless smart home button.
 
-This project was built for a YouTube build video. See the full step-by-step guide at the link below.
+This project was built for a YouTube build video. See the full step-by-step on my [YouTube channel](https://www.youtube.com/@uamphome)
 
-<!-- INSERT PICTURE: Top-down glamour shot of finished button in 3D printed case, possibly next to a coin for scale -->
+[![Alt Text](assets/images/04_micro_matter_button.png)](assets/images/04_micro_matter_button.png)
 
 > **No soldering required.** Flash the precompiled binary, commission it to your smart home, and you're done.
 
@@ -14,10 +14,10 @@ This project was built for a YouTube build video. See the full step-by-step guid
 
 | Item | Notes |
 |------|-------|
-| [HolyIoT 25008](AFFILIATE_LINK_25008) | Core board — button only |
-| [HolyIoT 25015](AFFILIATE_LINK_25015) | Adds SHT40 temperature & humidity sensor |
-| [Raspberry Pi Pico](AFFILIATE_LINK_PICO) | Used as a CMSIS-DAP programmer via picoprobe firmware |
-| [PCB spring-pin test clip](AFFILIATE_LINK_TEST_CLIP) | Clamps to the board's SWD pads — no soldering needed |
+| [HolyIoT 25008](https://s.click.aliexpress.com/e/_c4MbjoMv) | Core board — button only |
+| [HolyIoT 25015](https://s.click.aliexpress.com/e/_c3R5B6Fn) | Adds SHT40 temperature & humidity sensor |
+| [Seeed Studio Xiao RP2040](https://s.click.aliexpress.com/e/_c3o6kaAl) | Used as a CMSIS-DAP programmer. via picoprobe firmware. Any Raspberry PI pico board with the RP2040 or RP2350 will do |
+| [PCB spring-pin test clip](https://s.click.aliexpress.com/e/_c39zxHAZ) | Clamps to the board's SWD pads — no soldering needed |
 | CR2032 coin cell battery | Powers the finished button |
 
 The **25015** is a drop-in hardware upgrade over the 25008. It uses the same firmware but additionally reports temperature and humidity to your smart home hub. Both boards run off a single coin cell.
@@ -34,10 +34,10 @@ Four precompiled binaries are provided in the [Releases](../../releases/latest) 
 
 | File | Board | Mode |
 |------|-------|------|
-| `holyiot_25008_mode1.hex` | HolyIoT 25008 | Mode 1 — Dimmable switch (requires binding) |
-| `holyiot_25008_mode2.hex` | HolyIoT 25008 | Mode 2 — Generic switch |
-| `holyiot_25015_mode1.hex` | HolyIoT 25015 | Mode 1 — Dimmable switch (requires binding) |
-| `holyiot_25015_mode2.hex` | HolyIoT 25015 | Mode 2 — Generic switch |
+| `micro_matter_button_h25008_om1.hex` | HolyIoT 25008 | Mode 1 — Dimmable switch (requires binding) |
+| `micro_matter_button_h25008_om2.hex` | HolyIoT 25008 | Mode 2 — Generic switch |
+| `micro_matter_button_h25015_om1.hex` | HolyIoT 25015 | Mode 1 — Dimmable switch (requires binding) |
+| `micro_matter_button_h25015_om2.hex` | HolyIoT 25015 | Mode 2 — Generic switch |
 
 **Not sure which mode to pick?** Read the [Operating Modes](#operating-modes) section below, then come back.
 
@@ -64,7 +64,6 @@ Install pyocd and its nRF54l pack:
 
 ```bash
 pip install pyocd
-pyocd pack install nrf54l
 ```
 
 Flash the firmware (replace the filename with your chosen binary):
@@ -79,10 +78,10 @@ That's it — the chip will reset and start advertising over Bluetooth LE.
 
 Open your smart home app and add a new Matter device. Use the QR code or manual pairing code below when prompted.
 
-<!-- INSERT PICTURE: Phone screen showing the Matter QR code being scanned in Apple Home / Google Home / HA -->
+[![Alt Text](assets/images/setup.png)](assets/images/setup.png)
 
 **Manual pairing code:** `34970112332`  
-**QR Code payload:** `MT:4CT9142C00KA0648G00`
+**QR Code:** [Scan or screenshot this](https://project-chip.github.io/connectedhomeip/qrcode.html?data=MT:4CT9142C00KA0648G00)
 
 > The LED on the board will blink slowly while waiting for commissioning and turn off once paired.
 
@@ -135,11 +134,11 @@ Binding is a Matter concept that tells the switch which light(s) to control. Wit
 
 ### With Home Assistant (recommended)
 
-Home Assistant makes binding straightforward, especially when running on a VM or alongside a Thread Border Router. I have a dedicated video on my YouTube channel walking through how to share Matter devices across fabrics and set up bindings in Home Assistant — [watch it here](YOUR_YOUTUBE_BINDING_VIDEO_LINK).
+Home Assistant makes binding straightforward, especially when running on a VM or alongside a Thread Border Router. I have a dedicated video on my YouTube channel walking through how to share Matter devices across fabrics and set up bindings in Home Assistant — [watch it here](https://www.youtube.com/watch?v=eK-TLgXYBtU).
 
 ### With chip-tool (advanced)
 
-If you prefer the command line, use chip-tool to write the binding table. See the `CHIP_TOOL_BINDING.md` guide in this repository for the full commands.
+If you prefer the command line, use chip-tool to write the binding table.
 
 ---
 
@@ -160,17 +159,16 @@ A standard CR2032 (≈220 mAh capacity) gives a rough estimate of **~36,000 hour
 
 <!-- INSERT PICTURE: Side-by-side of plain case and grooved case designs -->
 
-STL files for the 3D printed case are available in the `case/` directory. The design is two parts that screw together — the board sits in the base and the top half has a flexible plunger that transmits button presses through the face of the case. Prints cleanly in PLA with no post-processing.
+STL files for the 3D printed case are available in the `assets/stl/` directory. The design is two parts that screw together — the board sits in the base and the top half has a flexible plunger that transmits button presses through the face of the case. Prints cleanly in PLA with no post-processing.
 
 Two versions are provided:
-- `case_plain.stl` — minimal, flat face
-- `case_grooved.stl` — chamfered groove around the edge makes it look and feel more like a button
+- `micro_matter_button_25008.stl` - Holyiot 25008
+- `micro_matter_button_25015.stl` - Holyiot 25015
+- `programming_jig.stl` - Jig to hold the Holyiot Board during programming
 
 ---
 
 ## HolyIoT 25015 — Temperature & Humidity Variant
-
-<!-- INSERT PICTURE: Close-up of 25015 board showing SHT40 sensor, compared to 25008 -->
 
 The 25015 uses the same firmware binaries but adds two extra sensors:
 
@@ -227,4 +225,4 @@ Source code is licensed under the [LicenseRef-Nordic-5-Clause](LICENSE) licence,
 
 ---
 
-*Built and documented for the [YouTube channel](YOUR_YOUTUBE_CHANNEL_LINK). Full build guide and video linked below.*
+*Built and documented for the [YouTube channel](https://www.youtube.com/@uamphome). Full build guide and video linked below.*
