@@ -4,7 +4,7 @@ A tiny, coin-cell-powered **Matter over Thread** smart home button built on the 
 
 This project was built for a YouTube build video. See the full step-by-step on my [YouTube channel](https://www.youtube.com/@uamphome)
 
-[![Alt Text](assets/images/04_micro_matter_button.png)](assets/images/04_micro_matter_button.png)
+[![Alt Text](assets/images/micro_matter_button.png)](assets/images/micro_matter_button.png)
 
 > **No soldering required.** Flash the precompiled binary, commission it to your smart home, and you're done.
 
