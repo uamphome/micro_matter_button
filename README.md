@@ -17,7 +17,7 @@ This project was built for a YouTube build video. See the full step-by-step on m
 | [HolyIoT 25008](https://s.click.aliexpress.com/e/_c4MbjoMv) | Core board — button only |
 | [HolyIoT 25015](https://s.click.aliexpress.com/e/_c3R5B6Fn) | Adds SHT40 temperature & humidity sensor |
 | [Seeed Studio Xiao RP2040](https://s.click.aliexpress.com/e/_c3o6kaAl) | Used as a CMSIS-DAP programmer. via picoprobe firmware. Any Raspberry PI pico board with the RP2040 or RP2350 will do |
-| [PCB spring-pin test clip](https://s.click.aliexpress.com/e/_c39zxHAZ) | Clamps to the board's SWD pads — no soldering needed |
+| [PCB spring-pin test clip](https://s.click.aliexpress.com/e/_c39zxHAZ) | Clamps to the board's SWD pads — no soldering needed. 4 Pins. 1.5MM Pitch |
 | CR2032 coin cell battery | Powers the finished button |
 
 The **25015** is a drop-in hardware upgrade over the 25008. It uses the same firmware but additionally reports temperature and humidity to your smart home hub. Both boards run off a single coin cell.
