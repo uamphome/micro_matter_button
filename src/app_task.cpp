@@ -147,6 +147,7 @@ double sAccumulatedBrightness = 127.0;
 uint8_t sLastSentBrightness = 127;
 uint32_t sLastMovementTime = 0;
 bool sDimmerTriggered = false;
+bool sToggleOnRelease = false;
 #endif
 
 /* --- Mode 2 state --- */
@@ -373,6 +374,9 @@ void AppTask::TimerEventHandler(const Timer &timerType)
 		if (!(dk_get_buttons() & APPLICATION_BUTTON_MASK)) {
 			LOG_INF("Single tap — toggling light.");
 			LightSwitch::GetInstance().InitiateActionSwitch(LightSwitch::Action::Toggle);
+		} else {
+			/* Released before DimmerTrigger fires — toggle on release then */
+			sToggleOnRelease = true;
 		}
 		break;
 
@@ -494,6 +498,7 @@ void AppTask::ButtonEventHandler(Nrf::ButtonState state, Nrf::ButtonMask hasChan
 			} else {
 				/* First press — wait for double tap or long press */
 				sDimmerTriggered = false;
+				sToggleOnRelease = false;
 				Instance().StartTimer(Timer::SingleTap, 400);
 				Instance().StartTimer(Timer::DimmerTrigger, kDimmerTriggeredTimeout);
 			}
@@ -533,6 +538,12 @@ void AppTask::ButtonEventHandler(Nrf::ButtonState state, Nrf::ButtonMask hasChan
 				sDimmerTriggered = false;
 			}
 #ifdef CONFIG_MATTER_BUTTON_DOUBLE_TAP
+			else if (sToggleOnRelease) {
+				/* Held past the SingleTap window but released before DimmerTrigger */
+				LOG_INF("Late release — toggling light.");
+				LightSwitch::GetInstance().InitiateActionSwitch(LightSwitch::Action::Toggle);
+			}
+			sToggleOnRelease = false;
 			/* Short press: SingleTap timer is still running and will fire the toggle */
 #else
 			else {
