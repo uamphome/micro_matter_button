@@ -60,6 +60,17 @@ config MATTER_BUTTON_MODE_2
 
 endchoice
 
+config MATTER_BUTTON_DOUBLE_TAP
+	bool "Double-tap accelerometer dimming"
+	depends on MATTER_BUTTON_MODE_1
+	default y
+	help
+	  A double-tap wakes the accelerometer for rotational dimming. Telling a
+	  single press from a double-tap holds every short press back by 400 ms.
+	  Disable this to toggle the light on button release instead, for the
+	  lowest latency. Long-press dimming is unaffected; the accelerometer
+	  then stays powered down.
+
 source "$(ZEPHYR_CONNECTEDHOMEIP_MODULE_DIR)/config/nrfconnect/chip-module/Kconfig.features"
 source "$(ZEPHYR_CONNECTEDHOMEIP_MODULE_DIR)/config/nrfconnect/chip-module/Kconfig.defaults"
 source "$(ZEPHYR_NRF_MODULE_DIR)/samples/matter/common/src/Kconfig"
