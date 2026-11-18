@@ -24,7 +24,7 @@ config NETCORE_IPC_RADIO_BT_HCI_IPC
 
 #### Bootloader
 choice BOOTLOADER
-	default BOOTLOADER_MCUBOOT if !BOARD_NRF21540DK
+	default BOOTLOADER_MCUBOOT if !BOARD_NRF21540DK && !BOARD_HOLYIOT_25008 && !BOARD_HOLYIOT_25015
 endchoice
 
 if BOOTLOADER_MCUBOOT
@@ -86,6 +86,10 @@ endif # WIFI_NRF70
 
 #### Enable generating factory data
 config MATTER_FACTORY_DATA_GENERATE
-	default y if !BOARD_NRF21540DK
+	default y if !BOARD_NRF21540DK && !BOARD_HOLYIOT_25008 && !BOARD_HOLYIOT_25015
+
+#### The Holyiot boards run without a bootloader, so there is no slot for OTA images
+config MATTER_OTA
+	default n if BOARD_HOLYIOT_25008 || BOARD_HOLYIOT_25015
 
 source "share/sysbuild/Kconfig"
