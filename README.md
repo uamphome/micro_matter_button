@@ -76,6 +76,31 @@ pyocd load ./holyiot_25008_mode1.hex -t nrf54l
 
 That's it — the chip will reset and start advertising over Bluetooth LE.
 
+### Alternative — Flipper Zero as the programmer
+
+A Flipper Zero can stand in for the Pico. Install the [DAP Link](https://lab.flipper.net/apps/dap_link) app and it shows up as a CMSIS-DAP probe. This was tested on macOS with [nrf_ocd](https://github.com/lolren/open-nrf-ocd). Its macOS fixes are in [lolren/open-nrf-ocd#1](https://github.com/lolren/open-nrf-ocd/pull/1) and are not in a release yet.
+
+[![Flipper Zero wired to the test clip](assets/images/flipper_wiring.jpg)](assets/images/flipper_wiring.jpg)
+
+| Flipper GPIO | HolyIoT Pad |
+|--------------|-------------|
+| 2 (A7) | SWCLK |
+| 3 (A6) | SWDIO |
+| 11 (GND) | GND |
+| 9 (3V3) | VCC (remove the coin cell) |
+
+> **Use pins 2 and 3.** Pins 10 and 12 are labelled SWC/SIO on the Flipper's case, but they are the Flipper's own debug port, and DAP Link does not use them. The app lists its pinout under *Config → Help and Pinout*.
+
+Start DAP Link on the Flipper, then:
+
+```bash
+nrf_ocd list                                   # note the probe serial
+nrf_ocd -t nrf54l15 -u <serial> info           # should report DP IDCODE 0x6ba02477
+nrf_ocd -t nrf54l15 -u <serial> -e chip --no-verify load micro_matter_button_h25008_om1.hex
+```
+
+Over the Flipper's HID link, programming runs at about 3 kB/s, so a full image takes about three minutes. Readback verify takes about 25 minutes, so `--no-verify` is used here. Spot-check with `nrf_ocd ... read <addr> 16` if you want.
+
 ### Step 4 — Commission to your smart home
 
 Open your smart home app and add a new Matter device. Use the QR code or manual pairing code below when prompted.
@@ -86,6 +111,8 @@ Open your smart home app and add a new Matter device. Use the QR code or manual 
 **QR Code:** [Scan or screenshot this](https://project-chip.github.io/connectedhomeip/qrcode.html?data=MT:4CT9142C00KA0648G00)
 
 > The LED on the board will blink slowly while waiting for commissioning and turn off once paired.
+
+> **Home Assistant:** the firmware uses the Matter SDK's test attestation certificates (vendor `0xFFF1`), and the Matter Server rejects these by default. On iOS, the only error you see is *"Unable to add accessory, you may need to restart it"*. The Matter Server log shows *"This device uses a test/development certificate"*. Enable **`enable_test_net_dcl`** in the Matter Server add-on configuration, restart the add-on, factory-reset the button and commission again.
 
 ---
 
@@ -192,17 +219,19 @@ For developers who want to customise the firmware.
 
 ### Selecting a mode at build time
 
-The operating mode is a Kconfig choice. Pass it on the west build command line:
+The operating mode is a Kconfig choice. Pass it on the west build command line. The Holyiot board definitions live in this repo, so point `BOARD_ROOT` at it:
 
 ```bash
 # Mode 1 — Dimmable switch
-west build -b holyiot_25008_nrf54l15_cpuapp -- -DCONFIG_MATTER_BUTTON_MODE_1=y
+west build -b holyiot_25008/nrf54l15/cpuapp -- -DBOARD_ROOT=$PWD -DCONFIG_MATTER_BUTTON_MODE_1=y
 
 # Mode 2 — Generic switch
-west build -b holyiot_25008_nrf54l15_cpuapp -- -DCONFIG_MATTER_BUTTON_MODE_2=y
+west build -b holyiot_25008/nrf54l15/cpuapp -- -DBOARD_ROOT=$PWD -DCONFIG_MATTER_BUTTON_MODE_2=y
 ```
 
-Replace `holyiot_25008` with `holyiot_25015` for the sensor variant.
+Replace `holyiot_25008` with `holyiot_25015` for the sensor variant. The output is `build/merged.hex`.
+
+The Holyiot boards build without MCUboot, Matter OTA or factory data, like the precompiled binaries (see `Kconfig.sysbuild`). They also get a 40 KB settings partition, which is enough to commission into more than one fabric (`boards/holyiot_*.conf`).
 
 ### KConfig options
 
