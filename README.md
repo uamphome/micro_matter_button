@@ -109,6 +109,8 @@ This mode acts as a **Dimmable Light Switch** (Matter Light Switch device type).
 
 Rotational dimming activates for up to **10 seconds** after a double-tap. If no movement is detected for **3 seconds** during dimming, the accelerometer powers back down automatically to save battery.
 
+> **Latency:** to tell a single press from a double-tap, the toggle is held back for 400 ms. If you don't need rotational dimming, build with `-DCONFIG_MATTER_BUTTON_DOUBLE_TAP=n`. The toggle is then sent as soon as the button is released, long-press dimming works as before, and the accelerometer stays powered down.
+
 **Best used with:** Home Assistant, or any Matter hub that supports binding.
 
 ---
@@ -212,6 +214,10 @@ Replace `holyiot_25008` with `holyiot_25015` for the sensor variant.
 | `MATTER_BUTTON_MODE_2` | n | Generic switch with short-press and long-press events |
 
 Both options are mutually exclusive — only one may be set at a time.
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `MATTER_BUTTON_DOUBLE_TAP` | y | Mode 1 only. Double-tap starts rotational dimming. Set to `n` to toggle on release with no 400 ms wait |
 
 ---
 
